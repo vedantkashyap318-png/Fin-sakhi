@@ -1,0 +1,6 @@
+{
+  "name": "Fin सखी - वित्तीय साक्षरता से सशक्त नारी",
+  "description": "Official book purchase and direct UPI payment storefront for 'Fin सखी - वित्तीय साक्षरता से सशक्त नारी' by Pratima. Order online with quick GPay and QR payment.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
