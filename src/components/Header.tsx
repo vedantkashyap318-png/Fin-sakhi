@@ -27,10 +27,14 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Zone 1: Brand Wordmark */}
           <a
             href="#"
-            className="flex items-center gap-2 text-xl sm:text-2xl font-bold tracking-tight text-rose-950 font-display whitespace-nowrap shrink-0 hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 whitespace-nowrap shrink-0 hover:opacity-90 transition-opacity"
+            aria-label="Fin सखी - वित्तीय साक्षरता से सशक्त नारी"
           >
-            <span className="text-rose-600 font-devanagari text-2xl sm:text-3xl">Fin</span>
-            <span className="font-devanagari text-rose-900">सखी</span>
+            <img
+              src="/assets/aistudio/InShot_20261116_235545513_ccfc5b67.jpg"
+              alt="Fin सखी"
+              className="h-9 sm:h-11 w-auto object-contain"
+            />
             <span className="hidden sm:inline-block text-xs font-normal text-rose-700/70 ml-1 border-l border-rose-200 pl-2">
               वित्तीय साक्षरता से सशक्त नारी
             </span>

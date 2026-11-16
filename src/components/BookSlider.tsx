@@ -39,21 +39,22 @@ export const SLIDES = [
     description: 'फ्रंट कवर, स्पाइन एवं बैक कवर का सम्पूर्ण प्रिंट स्वरूप।',
   },
   {
-    id: 'qr',
-    title: 'Official GPay Scanner & UPI ID',
-    hindiTitle: 'आधिकारिक स्कैनर एवं UPI भुगतान',
-    subtitle: 'prakrish31-5@oksbi · Pratima K',
-    imageUrl: '/assets/aistudio/IMG-20261112-WA0003_2__7d87ca1b.jpg',
-    badge: 'Direct UPI QR',
-    description: 'सीधे बैंक खाते में सुरक्षित भुगतान के लिए आधिकारिक गूगल पे QR कोड।',
+    id: 'edition-stack',
+    title: 'Author Collector Stack',
+    hindiTitle: 'लेखिका संग्रह संस्करण',
+    subtitle: 'Fin सखी · Pratima Edition',
+    imageUrl: '/assets/aistudio/InShot_20261117_005733189_90585b24.jpg',
+    badge: 'Pratima Edition',
+    description: 'लेखिका प्रतिमा के हस्ताक्षर और प्रीमियम प्रिंट फिनिश के साथ Fin सखी पुस्तक संग्रह।',
   },
 ];
 
 interface BookSliderProps {
   onPayNowClick: () => void;
+  orderTotal?: number;
 }
 
-export const BookSlider: React.FC<BookSliderProps> = ({ onPayNowClick }) => {
+export const BookSlider: React.FC<BookSliderProps> = ({ onPayNowClick, orderTotal = 505 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -187,7 +188,7 @@ export const BookSlider: React.FC<BookSliderProps> = ({ onPayNowClick }) => {
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
         >
           <QrCode className="w-3.5 h-3.5 text-rose-600" />
-          <span>Pay ₹505 via QR</span>
+          <span>Pay ₹{orderTotal} via QR</span>
         </button>
       </div>
 

@@ -11,6 +11,7 @@ import { TermsModal } from './components/TermsModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 import { ShareModal } from './components/ShareModal';
 import { Footer } from './components/Footer';
+import { DynamicQrCode } from './components/DynamicQrCode';
 import { OrderDetails, SavedOrder, PERMANENT_SITE_URL } from './types';
 import { ArrowRight, Sparkles, QrCode, History } from 'lucide-react';
 
@@ -143,10 +144,6 @@ export default function App() {
     setIsPaymentOpen(true);
   };
 
-  const handleDirectQuickPay = () => {
-    setIsPaymentOpen(true);
-  };
-
   const handleOrderCompleted = (newOrder: SavedOrder) => {
     setOrders((prev) => [newOrder, ...prev]);
     addToast({
@@ -221,7 +218,7 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column (7 cols): Interactive Book Slider & 3D Stage */}
           <div className="lg:col-span-7 space-y-6">
-            <BookSlider onPayNowClick={handleDirectQuickPay} />
+            <BookSlider onPayNowClick={handleOpenCheckout} orderTotal={orderTotal} />
           </div>
 
           {/* Right Column (5 cols): Order Summary & Purchasing Card */}
@@ -236,7 +233,7 @@ export default function App() {
               onCheckout={handleOpenCheckout}
               onTermsClick={() => setIsTermsOpen(true)}
               onContactClick={() => setIsContactOpen(true)}
-              onQuickPayClick={handleDirectQuickPay}
+              onQuickPayClick={handleOpenCheckout}
               onShareClick={handleShareClick}
             />
           </div>
@@ -270,7 +267,7 @@ export default function App() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
                 <button
-                  onClick={handleDirectQuickPay}
+                  onClick={handleOpenCheckout}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-rose-700 hover:bg-rose-800 text-white font-semibold rounded-xl shadow-sm text-sm cursor-pointer transition-colors"
                 >
                   <QrCode className="w-4 h-4" />
@@ -287,22 +284,13 @@ export default function App() {
               </div>
             </div>
 
-            {/* Embedded New Official QR Code Image Preview with Dynamic Amount Badge */}
-            <div className="shrink-0 flex flex-col items-center bg-rose-50/50 p-4 rounded-2xl border border-rose-200/80 shadow-2xs max-w-[260px] w-full">
-              <div className="w-full bg-white rounded-xl overflow-hidden shadow-xs border border-slate-200">
-                <img
-                  src="/assets/aistudio/IMG-20261112-WA0003_2__7d87ca1b.jpg"
-                  alt="Official Google Pay QR Code - Pratima K"
-                  className="w-full h-auto object-contain cursor-pointer hover:opacity-95 transition-opacity"
-                  onClick={handleDirectQuickPay}
-                />
-              </div>
-              <div className="mt-2.5 text-center">
-                <span className="text-[11px] text-slate-500 block">Current Amount for {quantity} {quantity === 1 ? 'Copy' : 'Copies'}:</span>
-                <span className="text-base font-extrabold text-rose-800 font-mono">
-                  ₹{orderTotal}.00
-                </span>
-              </div>
+            {/* Dynamic Auto-Amount QR Code Preview */}
+            <div className="shrink-0 flex flex-col items-center bg-rose-50/40 p-4 rounded-2xl border border-rose-200/80 shadow-2xs w-full max-w-[320px]">
+              <DynamicQrCode
+                amount={orderTotal}
+                quantity={quantity}
+                note={`Fin Sakhi Book (${quantity}x)`}
+              />
             </div>
           </div>
         </section>
@@ -350,10 +338,10 @@ export default function App() {
             )}
 
             <button
-              onClick={handleDirectQuickPay}
-              aria-label="Scan QR Code"
+              onClick={handleOpenCheckout}
+              aria-label="Enter Delivery Address and Pay via QR"
               className="p-2.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl cursor-pointer hover:bg-rose-100 transition-colors"
-              title="Open QR scanner"
+              title="Enter delivery address to open QR payment"
             >
               <QrCode className="w-5 h-5" />
             </button>
