@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Check, Copy, ArrowLeft, MessageCircle, ExternalLink, CheckCircle, Shield, QrCode } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Check, Copy, ArrowLeft, MessageCircle, CheckCircle, Shield, QrCode, Phone } from 'lucide-react';
 import { OrderDetails, SavedOrder } from '../types';
 import { DynamicQrCode } from './DynamicQrCode';
 
@@ -19,32 +19,23 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onOrderCompleted,
 }) => {
   const [copiedUpi, setCopiedUpi] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [paymentDone, setPaymentDone] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPaymentDone(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const upiId = 'prakrish31-5@oksbi';
+  const gpayPhone = '7020378984';
   const payeeName = 'Pratima K';
   const amount = orderDetails.total.toFixed(2);
-  const transactionNote = 'Fin Sakhi Book Order';
-
-  // Standard UPI URI and App specific URIs
-  const genericUpiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
-    payeeName
-  )}&am=${amount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
-
-  const gpayUri = `tez://upi/pay?pa=${upiId}&pn=${encodeURIComponent(
-    payeeName
-  )}&am=${amount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
-
-  const phonepeUri = `phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(
-    payeeName
-  )}&am=${amount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
-
-  const paytmUri = `paytmmp://pay?pa=${upiId}&pn=${encodeURIComponent(
-    payeeName
-  )}&am=${amount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+  const transactionNote = `Fin Sakhi Book (${orderDetails.quantity}x)`;
 
   // Formatted WhatsApp confirmation message
   const whatsappMessage = `*New Order: Fin सखी (वित्तीय साक्षरता से सशक्त नारी)*
@@ -66,16 +57,57 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
 
   const whatsappUrl = `https://wa.me/917020378984?text=${encodeURIComponent(whatsappMessage)}`;
 
+  const copyText = async (value: string, onSuccess: () => void) => {
+    let didCopy = false;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        didCopy = true;
+      }
+    } catch {
+      didCopy = false;
+    }
+
+    if (!didCopy && typeof document !== 'undefined') {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = value;
+        textArea.setAttribute('readonly', '');
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        didCopy = document.execCommand('copy');
+        document.body.removeChild(textArea);
+      } catch {
+        didCopy = false;
+      }
+    }
+
+    if (didCopy) {
+      onSuccess();
+    }
+  };
+
   const handleCopyUpi = () => {
-    navigator.clipboard.writeText(upiId);
-    setCopiedUpi(true);
-    setTimeout(() => setCopiedUpi(false), 2500);
+    void copyText(upiId, () => {
+      setCopiedUpi(true);
+      setTimeout(() => setCopiedUpi(false), 2500);
+    });
+  };
+
+  const handleCopyPhone = () => {
+    void copyText(gpayPhone, () => {
+      setCopiedPhone(true);
+      setTimeout(() => setCopiedPhone(false), 2500);
+    });
   };
 
   const handleCopyAmount = () => {
-    navigator.clipboard.writeText(amount);
-    setCopiedAmount(true);
-    setTimeout(() => setCopiedAmount(false), 2500);
+    void copyText(amount, () => {
+      setCopiedAmount(true);
+      setTimeout(() => setCopiedAmount(false), 2500);
+    });
   };
 
   return (
@@ -189,74 +221,63 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
               </button>
             </div>
 
-            {/* Direct 1-Tap UPI Apps */}
-            <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                Direct One-Tap UPI Payment (Mobile)
-              </span>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {/* Google Pay Direct */}
-                <a
-                  href={gpayUri}
-                  className="flex items-center justify-center gap-2 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl font-semibold text-xs sm:text-sm shadow-xs transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>Google Pay (GPay)</span>
-                </a>
-
-                {/* Generic / All UPI Apps */}
-                <a
-                  href={genericUpiUri}
-                  className="flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-900 hover:bg-black active:bg-slate-800 text-white rounded-xl font-semibold text-xs sm:text-sm shadow-xs transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>Any UPI App (सभी UPI)</span>
-                </a>
-
-                {/* PhonePe */}
-                <a
-                  href={phonepeUri}
-                  className="flex items-center justify-center gap-2 py-2.5 px-3 bg-purple-700 hover:bg-purple-800 text-white rounded-xl font-semibold text-xs transition-colors"
-                >
-                  <span>PhonePe</span>
-                </a>
-
-                {/* Paytm */}
-                <a
-                  href={paytmUri}
-                  className="flex items-center justify-center gap-2 py-2.5 px-3 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-semibold text-xs transition-colors"
-                >
-                  <span>Paytm UPI</span>
-                </a>
+            {/* Method 1 (Recommended · Zero Bank Limit Error): Direct Pay via UPI ID or Number */}
+            <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-200 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider block">
+                    Recommended · Zero Bank Limit Error
+                  </span>
+                  <p className="text-xs text-slate-700 font-devanagari mt-0.5 leading-relaxed">
+                    GPay / PhonePe ऐप सीधे खोलें और नीचे दिए <strong>UPI ID</strong> या <strong>मोबाइल नंबर</strong> पर{' '}
+                    <strong className="font-mono text-slate-900">₹{orderDetails.total}</strong> भेजें (इसमें बैंक लिमिट एरर नहीं आता):
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* Copyable UPI ID Box */}
-            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase block mb-1">
-                Official UPI ID (प्रेस करके कॉपी करें):
-              </span>
-              <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-300">
+              <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-lg border border-emerald-200/80 shadow-2xs">
                 <div>
                   <span className="font-mono font-bold text-sm text-slate-900 select-all">
                     {upiId}
                   </span>
-                  <span className="block text-[10px] text-slate-400">
-                    Payee: Pratima K · State Bank of India
+                  <span className="block text-[10px] text-slate-500">
+                    Official UPI ID · Pratima K (SBI)
                   </span>
                 </div>
                 <button
+                  type="button"
                   onClick={handleCopyUpi}
-                  className="flex items-center gap-1 px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 rounded-md text-xs font-semibold cursor-pointer transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold cursor-pointer transition-colors"
                 >
-                  {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedUpi ? 'Copied!' : 'Copy'}</span>
+                  {copiedUpi ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedUpi ? 'Copied!' : 'Copy UPI'}</span>
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-lg border border-emerald-200/80 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <div>
+                    <span className="font-mono font-bold text-sm text-slate-900 select-all">
+                      {gpayPhone}
+                    </span>
+                    <span className="block text-[10px] text-slate-500">
+                      Pay Phone Number in GPay / PhonePe / Paytm
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyPhone}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold cursor-pointer transition-colors"
+                >
+                  {copiedPhone ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedPhone ? 'Copied!' : 'Copy No.'}</span>
                 </button>
               </div>
             </div>
 
-            {/* Dynamic QR Code Generated as per Quantity / Amount */}
+            {/* Method 2: Dynamic QR Code Generated as per Quantity / Amount */}
             <div className="border border-rose-200/80 rounded-2xl p-4 bg-gradient-to-b from-rose-50/40 via-white to-rose-50/40 text-center space-y-3">
               <div className="flex items-center justify-between text-xs font-bold text-slate-800 uppercase tracking-wide px-1">
                 <div className="flex items-center gap-1.5">
@@ -271,6 +292,7 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
               {/* Dynamic QR component */}
               <DynamicQrCode
                 amount={orderDetails.total}
+                quantity={orderDetails.quantity}
                 upiId={upiId}
                 payeeName={payeeName}
                 note={transactionNote}
@@ -278,10 +300,10 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
 
               <div className="text-xs text-slate-600 font-devanagari space-y-0.5">
                 <p className="font-semibold text-slate-800">
-                  Google Pay, PhonePe, Paytm या किसी भी UPI ऐप से स्कैन करें
+                  दूसरे फ़ोन के कैमरा / GPay स्कैनर से सीधे स्कैन करें
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  स्कैन करने पर ऐप में स्वतः ₹{orderDetails.total} की राशि भर जाएगी
+                  यदि एक ही फ़ोन उपयोग कर रहे हैं तो ऊपर दिए UPI ID या नंबर से भुगतान करें
                 </p>
               </div>
             </div>

@@ -8,7 +8,6 @@ interface OrderSummaryCardProps {
   deliveryCharge: number;
   gst: number;
   total: number;
-  minOrderValue: number;
   onCheckout: () => void;
   onTermsClick: () => void;
   onContactClick: () => void;
@@ -23,7 +22,6 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
   deliveryCharge,
   gst,
   total,
-  minOrderValue,
   onCheckout,
   onTermsClick,
   onContactClick,
@@ -31,7 +29,6 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
   onShareClick,
 }) => {
   const itemsSubtotal = pricePerUnit * quantity;
-  const isEligible = itemsSubtotal >= minOrderValue;
 
   return (
     <div className="bg-white rounded-2xl border border-rose-100/90 shadow-md p-5 sm:p-6 flex flex-col gap-5">
@@ -80,8 +77,9 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
           <span className="text-[11px] text-slate-500">₹{pricePerUnit} प्रति पुस्तक</span>
         </div>
 
-        <div className="flex items-center gap-2 bg-white rounded-lg border border-rose-200 p-1 shadow-2xs">
+        <div className="flex items-center gap-1.5 bg-white rounded-lg border border-rose-200 p-1 shadow-2xs">
           <button
+            type="button"
             onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
             disabled={quantity <= 1}
             aria-label="Decrease quantity"
@@ -90,11 +88,29 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
             <Minus className="w-3.5 h-3.5" />
           </button>
 
-          <span className="w-8 text-center font-bold text-sm text-slate-900 font-mono tabular-nums">
-            {quantity}
-          </span>
+          <input
+            type="number"
+            min={1}
+            inputMode="numeric"
+            aria-label="Book quantity"
+            value={quantity}
+            onChange={(e) => {
+              const parsed = parseInt(e.target.value, 10);
+              if (!Number.isNaN(parsed) && parsed >= 1) {
+                onQuantityChange(parsed);
+              }
+            }}
+            onBlur={(e) => {
+              const parsed = parseInt(e.target.value, 10);
+              if (Number.isNaN(parsed) || parsed < 1) {
+                onQuantityChange(1);
+              }
+            }}
+            className="w-11 text-center font-bold text-sm text-slate-900 font-mono tabular-nums bg-transparent focus:outline-hidden focus:ring-2 focus:ring-rose-200 rounded py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
 
           <button
+            type="button"
             onClick={() => onQuantityChange(quantity + 1)}
             aria-label="Increase quantity"
             className="w-8 h-8 rounded-md flex items-center justify-center text-slate-700 hover:bg-rose-50 active:bg-rose-100 cursor-pointer transition-colors"
@@ -119,7 +135,7 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
         <div className="flex items-center justify-between text-slate-600">
           <div className="flex items-center gap-1.5">
             <Truck className="w-3.5 h-3.5 text-slate-400" />
-            <span>Delivery Charges</span>
+            <span>Delivery Charges (Flat)</span>
           </div>
           <span className="font-mono tabular-nums font-medium text-slate-900">₹{deliveryCharge}</span>
         </div>
@@ -133,18 +149,13 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
           <span>Order Total</span>
           <span className="font-mono tabular-nums text-rose-700">₹{total}</span>
         </div>
-
-        <p className="text-[11px] text-slate-500 font-mono tabular-nums">
-          Min. order value ₹ {minOrderValue}
-        </p>
       </div>
 
       {/* Action Buttons: Checkout & Direct Scan */}
       <div className="flex flex-col gap-2.5 pt-1">
         <button
           onClick={onCheckout}
-          disabled={!isEligible}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-rose-700 hover:bg-rose-800 active:bg-rose-900 text-white font-semibold rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group text-sm sm:text-base"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-rose-700 hover:bg-rose-800 active:bg-rose-900 text-white font-semibold rounded-xl shadow-sm transition-all cursor-pointer group text-sm sm:text-base"
         >
           <span>Checkout & Enter Address · ₹{total}</span>
           <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

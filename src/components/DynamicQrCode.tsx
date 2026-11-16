@@ -4,6 +4,7 @@ import { RefreshCw, Download, Sparkles, Check, Copy } from 'lucide-react';
 
 interface DynamicQrCodeProps {
   amount: number;
+  quantity?: number;
   upiId?: string;
   payeeName?: string;
   note?: string;
@@ -12,6 +13,7 @@ interface DynamicQrCodeProps {
 
 export const DynamicQrCode: React.FC<DynamicQrCodeProps> = ({
   amount,
+  quantity: explicitQuantity,
   upiId = 'prakrish31-5@oksbi',
   payeeName = 'Pratima K',
   note = 'Fin Sakhi Book Order',
@@ -23,7 +25,7 @@ export const DynamicQrCode: React.FC<DynamicQrCodeProps> = ({
   const [copied, setCopied] = useState<boolean>(false);
 
   const formattedAmount = amount.toFixed(2);
-  const quantity = Math.max(1, Math.round((amount - 40) / 465));
+  const quantity = explicitQuantity ?? Math.max(1, Math.round((amount - 40) / 465));
 
   const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
     payeeName
@@ -58,10 +60,37 @@ export const DynamicQrCode: React.FC<DynamicQrCodeProps> = ({
     };
   }, [upiUri]);
 
-  const handleCopyUpi = () => {
-    navigator.clipboard.writeText(upiId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyUpi = async () => {
+    let didCopy = false;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(upiId);
+        didCopy = true;
+      }
+    } catch {
+      didCopy = false;
+    }
+
+    if (!didCopy && typeof document !== 'undefined') {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = upiId;
+        textArea.setAttribute('readonly', '');
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        didCopy = document.execCommand('copy');
+        document.body.removeChild(textArea);
+      } catch {
+        didCopy = false;
+      }
+    }
+
+    if (didCopy) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
@@ -185,9 +214,8 @@ export const DynamicQrCode: React.FC<DynamicQrCodeProps> = ({
 
       {/* Helpful Action & Guidance */}
       <div className="flex items-center gap-3 text-xs text-slate-500">
-        <span className="flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
-          <Sparkles className="w-3 h-3 text-emerald-600" />
-          <span>Amount Pre-filled: ₹{formattedAmount}</span>
+        <span className="text-[11px] text-emerald-700 font-medium">
+          Payable Total: ₹{formattedAmount}
         </span>
         {qrDataUrl && activeTab === 'dynamic' && (
           <a
@@ -200,6 +228,12 @@ export const DynamicQrCode: React.FC<DynamicQrCodeProps> = ({
           </a>
         )}
       </div>
+
+      {amount > 2000 && (
+        <p className="text-[11px] text-amber-900 bg-amber-50/80 border border-amber-200/80 rounded-lg px-3 py-1.5 max-w-[300px] leading-snug">
+          For orders above ₹2,000, use live camera scan or pay via UPI ID (<span className="font-mono font-semibold">{upiId}</span>) / Number <span className="font-mono font-semibold">7020378984</span> — UPI apps cap gallery QR uploads at ₹2,000.
+        </p>
+      )}
     </div>
   );
 };

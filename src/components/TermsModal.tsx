@@ -66,9 +66,9 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
           <div className="flex items-start gap-3 p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/60">
             <RefreshCw className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
             <div>
-              <h4 className="font-semibold text-slate-900">Order Value & Replacement</h4>
+              <h4 className="font-semibold text-slate-900">Order Quantity & Replacement</h4>
               <ul className="mt-1 list-disc list-inside space-y-1 text-slate-600 text-xs">
-                <li>Minimum Order Value: ₹230.</li>
+                <li>No minimum order limit — order 1 or multiple copies with flat ₹40 delivery across India.</li>
                 <li>Every book copy is inspected before packing. In the rare case of transit damage or binding defect, free replacement will be provided upon WhatsApp photo confirmation.</li>
               </ul>
             </div>

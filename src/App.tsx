@@ -19,7 +19,6 @@ export default function App() {
   const pricePerUnit = 465;
   const deliveryCharge = 40;
   const gst = 0;
-  const minOrderValue = 230;
 
   const orderTotal = pricePerUnit * quantity + deliveryCharge;
 
@@ -124,11 +123,12 @@ export default function App() {
 
   // Update orderDetails when quantity changes
   const handleQuantityChange = (newQty: number) => {
-    setQuantity(newQty);
-    const updatedTotal = pricePerUnit * newQty + deliveryCharge;
+    const safeQty = Math.max(1, Math.floor(newQty || 1));
+    setQuantity(safeQty);
+    const updatedTotal = pricePerUnit * safeQty + deliveryCharge;
     setOrderDetails((prev) => ({
       ...prev,
-      quantity: newQty,
+      quantity: safeQty,
       total: updatedTotal,
     }));
   };
@@ -233,7 +233,6 @@ export default function App() {
               deliveryCharge={deliveryCharge}
               gst={gst}
               total={orderTotal}
-              minOrderValue={minOrderValue}
               onCheckout={handleOpenCheckout}
               onTermsClick={() => setIsTermsOpen(true)}
               onContactClick={() => setIsContactOpen(true)}
