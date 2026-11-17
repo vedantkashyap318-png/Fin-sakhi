@@ -73,7 +73,7 @@ export const OrderHistoryModal: React.FC<OrderHistoryModalProps> = ({
             <div className="space-y-4">
               {orders.map((order) => {
                 const whatsappStatusUrl = `https://wa.me/917020378984?text=${encodeURIComponent(
-                  `Namaste Pratima ji / Vedant K, I am inquiring about the dispatch status of my order ${order.orderId} (Fin सखी - ${order.quantity} copies, ₹${order.total}). Delivery Address: ${order.addressLine}, ${order.city}. Thank you!`
+                  `Namaste Pratima ji / Vedant K, I am inquiring about the dispatch status of my order ${order.orderId} (Fin सखी - ${order.quantity} copies, ₹${order.total}${order.utr ? `, UTR: ${order.utr}` : ''}). Delivery Address: ${order.addressLine}, ${order.city}. Thank you!`
                 )}`;
 
                 return (
@@ -108,6 +108,11 @@ export const OrderHistoryModal: React.FC<OrderHistoryModalProps> = ({
                         <p className="text-slate-500 text-[11px] mt-0.5">
                           मात्रा (Quantity): <strong className="text-slate-700">{order.quantity} प्रति (Copies)</strong> · Paid via UPI ({order.upiId})
                         </p>
+                        {order.utr && (
+                          <p className="text-[11px] text-slate-600 font-mono mt-0.5">
+                            UTR Ref: <strong className="text-slate-800">{order.utr}</strong>
+                          </p>
+                        )}
                       </div>
 
                       <div className="text-right shrink-0">

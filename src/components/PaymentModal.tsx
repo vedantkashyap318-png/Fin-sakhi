@@ -1,7 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Copy, ArrowLeft, MessageCircle, CheckCircle, Shield, QrCode, Phone } from 'lucide-react';
+import { X, Check, Copy, ArrowLeft, MessageCircle, CheckCircle, Shield, QrCode, Phone, AlertCircle, Lock } from 'lucide-react';
 import { OrderDetails, SavedOrder } from '../types';
 import { DynamicQrCode } from './DynamicQrCode';
+import { CheckoutStepIndicator } from './CheckoutStepIndicator';
+
+const USED_UTRS_STORAGE_KEY = 'finsakhi_used_utrs';
+const ORDERS_STORAGE_KEY = 'finsakhi_orders';
+
+const loadStoredUsedUtrs = (): string[] => {
+  if (typeof window === 'undefined') return [];
+  const utrSet = new Set<string>();
+  try {
+    const rawUtrs = localStorage.getItem(USED_UTRS_STORAGE_KEY);
+    if (rawUtrs) {
+      const parsed = JSON.parse(rawUtrs);
+      if (Array.isArray(parsed)) {
+        parsed.forEach((item) => {
+          if (typeof item === 'string' && /^\d{12}$/.test(item)) {
+            utrSet.add(item);
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.error('Error reading used UTRs:', e);
+  }
+
+  try {
+    const rawOrders = localStorage.getItem(ORDERS_STORAGE_KEY);
+    if (rawOrders) {
+      const parsedOrders = JSON.parse(rawOrders);
+      if (Array.isArray(parsedOrders)) {
+        parsedOrders.forEach((order) => {
+          if (order && typeof order.utr === 'string' && /^\d{12}$/.test(order.utr)) {
+            utrSet.add(order.utr);
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.error('Error reading order UTRs:', e);
+  }
+
+  return Array.from(utrSet);
+};
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -22,10 +64,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [paymentDone, setPaymentDone] = useState(false);
+  const [utr, setUtr] = useState('');
+  const [utrFormatWarning, setUtrFormatWarning] = useState('');
+  const [usedUtrs, setUsedUtrs] = useState<string[]>(() => loadStoredUsedUtrs());
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [submittedUtr, setSubmittedUtr] = useState('');
+  const [confirmedOrder, setConfirmedOrder] = useState<SavedOrder | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setPaymentDone(false);
+      setUtr('');
+      setUtrFormatWarning('');
+      setHasSubmitted(false);
+      setSubmittedUtr('');
+      setConfirmedOrder(null);
+      setUsedUtrs(loadStoredUsedUtrs());
     }
   }, [isOpen]);
 
@@ -37,25 +91,104 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const amount = orderDetails.total.toFixed(2);
   const transactionNote = `Fin Sakhi Book (${orderDetails.quantity}x)`;
 
-  // Formatted WhatsApp confirmation message
+  // Mandatory Customer Details Check
+  const cleanCustomerName = orderDetails.customerName.trim();
+  const cleanPhoneDigits = orderDetails.phoneNumber.replace(/\D/g, '');
+  const cleanAddressLine = orderDetails.addressLine.trim();
+  const cleanCity = orderDetails.city.trim();
+  const cleanPincodeDigits = orderDetails.pincode.replace(/\D/g, '');
+
+  const hasValidName = cleanCustomerName.length > 0;
+  const hasValidPhone = cleanPhoneDigits.length >= 10;
+  const hasValidAddress =
+    cleanAddressLine.length > 0 && cleanCity.length > 0 && cleanPincodeDigits.length === 6;
+  const hasValidCustomerDetails = hasValidName && hasValidPhone && hasValidAddress;
+
+  // UTR Validation & Duplicate Check
+  const isValidUtr = /^\d{12}$/.test(utr);
+  const isDuplicateUtr = isValidUtr && usedUtrs.includes(utr);
+  const canSubmit = hasValidCustomerDetails && isValidUtr && !isDuplicateUtr && !hasSubmitted;
+
+  const activeUtrForMessage = submittedUtr || utr;
+
+  // Formatted WhatsApp confirmation message with mandatory customer details + verified 12-digit UTR
   const whatsappMessage = `*New Order: Fin सखी (वित्तीय साक्षरता से सशक्त नारी)*
 ------------------------------------
-*Order Details:*
-- Quantity: ${orderDetails.quantity} copy (प्रतियां)
+*Order & Payment Verification:*
+${confirmedOrder ? `- Order ID: ${confirmedOrder.orderId}\n` : ''}- Quantity: ${orderDetails.quantity} copy (प्रतियां)
 - Book Amount: ₹${orderDetails.pricePerUnit * orderDetails.quantity}
 - Delivery Charges: ₹${orderDetails.deliveryCharge}
 - Total Paid: ₹${orderDetails.total}
 - UPI Payment To: ${upiId} (${payeeName})
+- 12-Digit UPI UTR Ref: ${activeUtrForMessage}
 
 *Customer Delivery Address:*
-- Name: ${orderDetails.customerName || 'Customer'}
-- Phone: ${orderDetails.phoneNumber || '+91 7020378984'}
-${orderDetails.email ? `- Email: ${orderDetails.email}\n` : ''}- Address: ${orderDetails.addressLine || 'Navi Mumbai'}
-${orderDetails.landmark ? `- Landmark: ${orderDetails.landmark}\n` : ''}- City: ${orderDetails.city}, ${orderDetails.state} - PIN: ${orderDetails.pincode}
-${orderDetails.notes ? `- Delivery Note: ${orderDetails.notes}\n` : ''}
-Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via GPay/UPI. Please confirm and dispatch my book. Thank you!`;
+- Name: ${cleanCustomerName}
+- Phone: ${orderDetails.phoneNumber.trim()}
+${orderDetails.email ? `- Email: ${orderDetails.email.trim()}\n` : ''}- Address: ${cleanAddressLine}
+${orderDetails.landmark ? `- Landmark: ${orderDetails.landmark.trim()}\n` : ''}- City: ${cleanCity}, ${orderDetails.state} - PIN: ${orderDetails.pincode.trim()}
+${orderDetails.notes ? `- Delivery Note: ${orderDetails.notes.trim()}\n` : ''}
+Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via GPay/UPI (UTR: ${activeUtrForMessage}). Please verify and dispatch my book. Thank you!`;
 
   const whatsappUrl = `https://wa.me/917020378984?text=${encodeURIComponent(whatsappMessage)}`;
+
+  const handleUtrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const digitsOnly = rawValue.replace(/\D/g, '');
+
+    if (rawValue !== digitsOnly) {
+      setUtrFormatWarning('Only numeric digits (0-9) are accepted for the 12-digit UTR.');
+    } else if (digitsOnly.length > 12) {
+      setUtrFormatWarning('UTR must be exactly 12 digits.');
+    } else {
+      setUtrFormatWarning('');
+    }
+
+    setUtr(digitsOnly.slice(0, 12));
+  };
+
+  const commitOrderOnce = (): SavedOrder | null => {
+    if (!canSubmit) return null;
+
+    setHasSubmitted(true);
+    setSubmittedUtr(utr);
+
+    const updatedUsedUtrs = Array.from(new Set([...usedUtrs, utr]));
+    setUsedUtrs(updatedUsedUtrs);
+    try {
+      localStorage.setItem(USED_UTRS_STORAGE_KEY, JSON.stringify(updatedUsedUtrs));
+    } catch (err) {
+      console.error('Error saving UTR to localStorage:', err);
+    }
+
+    const newOrder: SavedOrder = {
+      orderId: `FS-${Math.floor(100000 + Math.random() * 900000)}`,
+      timestamp: new Date().toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      quantity: orderDetails.quantity,
+      total: orderDetails.total,
+      customerName: cleanCustomerName,
+      phoneNumber: orderDetails.phoneNumber.trim(),
+      city: cleanCity,
+      state: orderDetails.state,
+      addressLine: cleanAddressLine,
+      pincode: orderDetails.pincode.trim(),
+      upiId,
+      utr,
+      status: 'Payment Recorded',
+    };
+
+    setConfirmedOrder(newOrder);
+    if (onOrderCompleted) {
+      onOrderCompleted(newOrder);
+    }
+    return newOrder;
+  };
 
   const copyText = async (value: string, onSuccess: () => void) => {
     let didCopy = false;
@@ -116,19 +249,21 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
         {/* Modal Header */}
         <div className="bg-gradient-to-r from-rose-900 via-rose-800 to-rose-900 text-white p-5 flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <button
-              onClick={onBackToAddress}
-              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-              title="Back to address"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+            {!paymentDone && (
+              <button
+                onClick={onBackToAddress}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                title="Back to address"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+            )}
             <div>
               <div className="text-xs text-rose-200 uppercase font-semibold">
-                Step 2 of 2: Payment Settlement
+                {paymentDone ? 'Step 3 of 3: Order Confirmation' : 'Step 2 of 3: Payment Settlement'}
               </div>
               <h3 className="text-lg sm:text-xl font-bold font-devanagari">
-                सुरक्षित UPI एवं QR भुगतान
+                {paymentDone ? 'ऑर्डर कन्फर्मेशन (Confirmation)' : 'सुरक्षित UPI एवं QR भुगतान'}
               </h3>
             </div>
           </div>
@@ -140,6 +275,13 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        <CheckoutStepIndicator
+          currentStep={paymentDone ? 3 : 2}
+          onStepClick={!paymentDone ? (step) => {
+            if (step === 1) onBackToAddress();
+          } : undefined}
+        />
 
         {paymentDone ? (
           /* Order Confirmed Screen */
@@ -158,6 +300,12 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
             </div>
 
             <div className="bg-rose-50/70 p-4 rounded-xl border border-rose-100 text-left text-xs space-y-2">
+              {confirmedOrder && (
+                <div className="flex justify-between font-semibold text-slate-800">
+                  <span>ऑर्डर आईडी (Order ID):</span>
+                  <span className="font-mono">{confirmedOrder.orderId}</span>
+                </div>
+              )}
               <div className="flex justify-between font-semibold text-slate-800">
                 <span>पुस्तकों की संख्या:</span>
                 <span>{orderDetails.quantity} प्रति (Copies)</span>
@@ -166,6 +314,12 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
                 <span>कुल भुगतान:</span>
                 <span>₹{orderDetails.total}</span>
               </div>
+              {activeUtrForMessage && (
+                <div className="flex justify-between font-semibold text-emerald-800">
+                  <span>UPI UTR Reference:</span>
+                  <span className="font-mono">{activeUtrForMessage}</span>
+                </div>
+              )}
               <div className="flex justify-between text-slate-600">
                 <span>डिलीवरी का पता:</span>
                 <span className="text-right truncate max-w-[200px]">
@@ -175,7 +329,7 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
             </div>
 
             <p className="text-xs text-slate-500 font-devanagari">
-              कृपया नीचे दिए बटन पर क्लिक करके लेखक को व्हाट्सएप पर डिलीवरी पता और सूचना भेजें ताकि तुरंत पार्सल भेजा जा सके:
+              कृपया नीचे दिए बटन पर क्लिक करके लेखक को व्हाट्सएप पर डिलीवरी पता और UTR सूचना भेजें ताकि तुरंत पार्सल भेजा जा सके:
             </p>
 
             <a
@@ -308,69 +462,134 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
               </div>
             </div>
 
-            {/* WhatsApp Confirmation & Done Button */}
+            {/* Mandatory 12-Digit UTR Input Directly Below QR Code */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <label
+                  htmlFor="upi-utr-input"
+                  className="block text-xs font-bold text-slate-800"
+                >
+                  Enter 12-digit UPI UTR Transaction Reference Number{' '}
+                  <span className="text-rose-600">*</span>
+                </label>
+                <span
+                  className={`text-[11px] font-mono font-semibold tabular-nums ${
+                    isValidUtr && !isDuplicateUtr ? 'text-emerald-700' : 'text-slate-500'
+                  }`}
+                >
+                  {utr.length}/12
+                </span>
+              </div>
+
+              <input
+                id="upi-utr-input"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={12}
+                autoComplete="off"
+                placeholder="उदा. 431209876543 (12 numeric digits)"
+                value={utr}
+                onChange={handleUtrChange}
+                className={`w-full px-3.5 py-2.5 text-sm font-mono tracking-wider rounded-lg border bg-white focus:outline-hidden focus:ring-2 ${
+                  isDuplicateUtr || utrFormatWarning || (utr.length > 0 && !isValidUtr)
+                    ? 'border-rose-400 focus:ring-rose-200 text-rose-900'
+                    : isValidUtr
+                      ? 'border-emerald-500 focus:ring-emerald-200 text-slate-900'
+                      : 'border-slate-300 focus:ring-rose-200 focus:border-rose-600 text-slate-900'
+                }`}
+              />
+
+              {/* Validation & Duplicate Feedback */}
+              {isDuplicateUtr ? (
+                <p className="flex items-start gap-1.5 text-xs font-medium text-rose-700">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                  <span>
+                    This UTR number has already been used for an order. Please enter a new payment reference.
+                  </span>
+                </p>
+              ) : utrFormatWarning ? (
+                <p className="flex items-start gap-1.5 text-xs font-medium text-rose-700">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                  <span>{utrFormatWarning}</span>
+                </p>
+              ) : utr.length > 0 && !isValidUtr ? (
+                <p className="flex items-start gap-1.5 text-xs font-medium text-rose-700">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                  <span>
+                    Please enter an exact 12-digit numeric UTR number ({utr.length}/12 digits entered).
+                  </span>
+                </p>
+              ) : isValidUtr ? (
+                <p className="flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                  <Check className="w-4 h-4 shrink-0 text-emerald-600" />
+                  <span>Valid 12-digit UTR verified. Ready to confirm order.</span>
+                </p>
+              ) : (
+                <p className="text-[11px] text-slate-500">
+                  पेमेंट करने के बाद अपने GPay / PhonePe / Paytm ऐप से 12-अंकों का UTR / UPI Ref No. यहाँ दर्ज करें।
+                </p>
+              )}
+
+              {/* Mandatory Customer Details Verification Banner */}
+              {!hasValidCustomerDetails && (
+                <div className="mt-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center justify-between gap-2">
+                  <span>
+                    Please complete your Name, 10-digit Phone, and Delivery Address before submitting.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onBackToAddress}
+                    className="shrink-0 px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-950 font-semibold rounded-md cursor-pointer transition-colors"
+                  >
+                    Edit Address
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Locked WhatsApp Confirmation & Order Complete Buttons */}
             <div className="space-y-2 pt-2 border-t border-slate-100">
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  if (onOrderCompleted) {
-                    onOrderCompleted({
-                      orderId: `FS-${Math.floor(100000 + Math.random() * 900000)}`,
-                      timestamp: new Date().toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      }),
-                      quantity: orderDetails.quantity,
-                      total: orderDetails.total,
-                      customerName: orderDetails.customerName || 'Customer',
-                      phoneNumber: orderDetails.phoneNumber || '+91 7020378984',
-                      city: orderDetails.city || 'Navi Mumbai',
-                      state: orderDetails.state || 'Maharashtra',
-                      addressLine: orderDetails.addressLine || 'Address',
-                      pincode: orderDetails.pincode || '',
-                      upiId,
-                      status: 'Payment Recorded',
-                    });
-                  }
-                }}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold rounded-xl shadow-md transition-colors text-xs sm:text-sm"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>WhatsApp पर भुगतान व पता भेजें (+91 7020378984)</span>
-              </a>
+              {canSubmit ? (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    commitOrderOnce();
+                    setPaymentDone(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold rounded-xl shadow-md transition-colors text-xs sm:text-sm"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>WhatsApp पर भुगतान व पता भेजें (+91 7020378984)</span>
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-200 text-slate-400 font-semibold rounded-xl cursor-not-allowed text-xs sm:text-sm"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>WhatsApp पर भुगतान व पता भेजें (+91 7020378984)</span>
+                </button>
+              )}
 
               <button
+                type="button"
+                disabled={!canSubmit}
                 onClick={() => {
-                  setPaymentDone(true);
-                  if (onOrderCompleted) {
-                    onOrderCompleted({
-                      orderId: `FS-${Math.floor(100000 + Math.random() * 900000)}`,
-                      timestamp: new Date().toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      }),
-                      quantity: orderDetails.quantity,
-                      total: orderDetails.total,
-                      customerName: orderDetails.customerName || 'Customer',
-                      phoneNumber: orderDetails.phoneNumber || '+91 7020378984',
-                      city: orderDetails.city || 'Navi Mumbai',
-                      state: orderDetails.state || 'Maharashtra',
-                      addressLine: orderDetails.addressLine || 'Address',
-                      pincode: orderDetails.pincode || '',
-                      upiId,
-                      status: 'Payment Recorded',
-                    });
+                  const created = commitOrderOnce();
+                  if (created) {
+                    setPaymentDone(true);
                   }
                 }}
-                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-xl transition-colors cursor-pointer text-xs sm:text-sm"
+                className={`w-full py-2.5 px-4 font-semibold rounded-xl transition-colors text-xs sm:text-sm ${
+                  canSubmit
+                    ? 'bg-slate-800 hover:bg-slate-900 text-white cursor-pointer shadow-xs'
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                }`}
               >
                 मैंने भुगतान कर दिया है (I have completed payment)
               </button>

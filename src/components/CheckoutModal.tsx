@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, MapPin, User, Phone, Mail, ArrowRight, Truck } from 'lucide-react';
 import { OrderDetails } from '../types';
+import { CheckoutStepIndicator } from './CheckoutStepIndicator';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -112,7 +113,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <div>
             <div className="flex items-center gap-1.5 text-xs text-rose-200 uppercase font-semibold">
               <MapPin className="w-3.5 h-3.5" />
-              <span>Step 1 of 2: Shipping Address</span>
+              <span>Step 1 of 3: Shipping Address</span>
             </div>
             <h3 className="text-lg sm:text-xl font-bold mt-1 font-devanagari">
               डिलीवरी का पता दर्ज करें
@@ -129,6 +130,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        <CheckoutStepIndicator currentStep={1} />
 
         {/* Address Form */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4">

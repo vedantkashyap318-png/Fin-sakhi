@@ -36,6 +36,7 @@ export interface SavedOrder {
   addressLine: string;
   pincode: string;
   upiId: string;
+  utr?: string;
   status: 'Pending Verification' | 'Payment Recorded' | 'Ready for Dispatch' | 'Dispatched';
 }
 
