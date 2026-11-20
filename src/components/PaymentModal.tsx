@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, Copy, ArrowLeft, MessageCircle, CheckCircle, Shield, QrCode, Phone, AlertCircle, Lock } from 'lucide-react';
-import { OrderDetails, SavedOrder } from '../types';
+import {
+  OrderDetails,
+  SavedOrder,
+  OFFICIAL_UPI_ID,
+  OFFICIAL_PAYEE_NAME,
+  OFFICIAL_GPAY_PHONE,
+  OFFICIAL_BANK_NAME,
+} from '../types';
 import { DynamicQrCode } from './DynamicQrCode';
 import { CheckoutStepIndicator } from './CheckoutStepIndicator';
 
@@ -85,9 +92,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   if (!isOpen) return null;
 
-  const upiId = 'prakrish31-5@oksbi';
-  const gpayPhone = '7020378984';
-  const payeeName = 'Pratima K';
+  const upiId = OFFICIAL_UPI_ID;
+  const gpayPhone = OFFICIAL_GPAY_PHONE;
+  const payeeName = OFFICIAL_PAYEE_NAME;
   const amount = orderDetails.total.toFixed(2);
   const transactionNote = `Fin Sakhi Book (${orderDetails.quantity}x)`;
 
@@ -395,7 +402,7 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
                     {upiId}
                   </span>
                   <span className="block text-[10px] text-slate-500">
-                    Official UPI ID · Pratima K (SBI)
+                    Official UPI ID · {payeeName} ({OFFICIAL_BANK_NAME})
                   </span>
                 </div>
                 <button
@@ -598,7 +605,7 @@ Namaste Pratima ji / Vedant K, I have transferred ₹${orderDetails.total} via G
             {/* Security note */}
             <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
               <Shield className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Direct Author Dispatch · Verified SBI Account · Navi Mumbai</span>
+              <span>Direct Author Dispatch · Verified {OFFICIAL_BANK_NAME} Account · Navi Mumbai</span>
             </div>
           </div>
         )}

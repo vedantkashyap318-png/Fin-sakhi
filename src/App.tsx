@@ -12,7 +12,13 @@ import { ToastContainer, ToastMessage } from './components/Toast';
 import { ShareModal } from './components/ShareModal';
 import { Footer } from './components/Footer';
 import { DynamicQrCode } from './components/DynamicQrCode';
-import { OrderDetails, SavedOrder, PERMANENT_SITE_URL } from './types';
+import {
+  OrderDetails,
+  SavedOrder,
+  PERMANENT_SITE_URL,
+  OFFICIAL_UPI_ID,
+  OFFICIAL_PAYEE_NAME,
+} from './types';
 import { ArrowRight, Sparkles, QrCode, History } from 'lucide-react';
 
 export default function App() {
@@ -258,7 +264,7 @@ export default function App() {
               </p>
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-1">
                 <span className="font-mono text-xs bg-slate-100 text-slate-800 font-bold px-3 py-1.5 rounded-lg border border-slate-200">
-                  UPI ID: prakrish31-5@oksbi
+                  UPI ID: {OFFICIAL_UPI_ID}
                 </span>
                 <span className="font-mono text-xs bg-rose-50 text-rose-800 font-extrabold px-3 py-1.5 rounded-lg border border-rose-200">
                   Total: ₹{orderTotal}
@@ -289,6 +295,8 @@ export default function App() {
               <DynamicQrCode
                 amount={orderTotal}
                 quantity={quantity}
+                upiId={OFFICIAL_UPI_ID}
+                payeeName={OFFICIAL_PAYEE_NAME}
                 note={`Fin Sakhi Book (${quantity}x)`}
               />
             </div>

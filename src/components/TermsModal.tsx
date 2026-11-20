@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, ShieldCheck, Truck, RefreshCw, CreditCard } from 'lucide-react';
+import { OFFICIAL_UPI_ID, OFFICIAL_PAYEE_NAME, OFFICIAL_GPAY_PHONE } from '../types';
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -40,10 +41,10 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
               <h4 className="font-semibold text-slate-900">Payment Modes & Verification</h4>
               <ul className="mt-1 list-disc list-inside space-y-1 text-slate-600 text-xs">
                 <li>
-                  Pay directly via GPay / PhonePe / Paytm: <span className="font-mono font-bold text-slate-800">7020378984</span>
+                  Pay directly via GPay / PhonePe / Paytm: <span className="font-mono font-bold text-slate-800">{OFFICIAL_GPAY_PHONE}</span>
                 </li>
                 <li>
-                  Official UPI ID: <span className="font-mono font-bold text-slate-800">prakrish31-5@oksbi</span> (Pratima K)
+                  Official UPI ID: <span className="font-mono font-bold text-slate-800">{OFFICIAL_UPI_ID}</span> ({OFFICIAL_PAYEE_NAME})
                 </li>
                 <li>Always verify the payee name before sending funds.</li>
               </ul>

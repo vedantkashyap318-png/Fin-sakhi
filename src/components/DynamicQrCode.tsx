@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { RefreshCw, Download, Sparkles, Check, Copy } from 'lucide-react';
+import { OFFICIAL_UPI_ID, OFFICIAL_PAYEE_NAME, OFFICIAL_GPAY_PHONE } from '../types';
 
 interface DynamicQrCodeProps {
   amount: number;
@@ -14,8 +15,8 @@ interface DynamicQrCodeProps {
 export const DynamicQrCode: React.FC<DynamicQrCodeProps> = ({
   amount,
   quantity: explicitQuantity,
-  upiId = 'prakrish31-5@oksbi',
-  payeeName = 'Pratima K',
+  upiId = OFFICIAL_UPI_ID,
+  payeeName = OFFICIAL_PAYEE_NAME,
   note = 'Fin Sakhi Book Order',
   className = '',
 }) => {
@@ -204,7 +205,7 @@ export const DynamicQrCode: React.FC<DynamicQrCodeProps> = ({
 
       {safeAmount > 2000 && (
         <p className="text-[11px] text-amber-900 bg-amber-50/80 border border-amber-200/80 rounded-lg px-3 py-1.5 max-w-[300px] leading-snug">
-          For orders above ₹2,000, use live camera scan or pay via UPI ID (<span className="font-mono font-semibold">{upiId}</span>) / Number <span className="font-mono font-semibold">7020378984</span> — UPI apps cap gallery QR uploads at ₹2,000.
+          For orders above ₹2,000, use live camera scan or pay via UPI ID (<span className="font-mono font-semibold">{upiId}</span>) / Number <span className="font-mono font-semibold">{OFFICIAL_GPAY_PHONE}</span> — UPI apps cap gallery QR uploads at ₹2,000.
         </p>
       )}
     </div>

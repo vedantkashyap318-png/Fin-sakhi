@@ -43,3 +43,9 @@ export interface SavedOrder {
 export const PERMANENT_SITE_URL = 'https://finsakhi.ai.studio/';
 export const PERMANENT_COVER_URL = 'https://finsakhi.ai.studio/og-cover.jpg';
 
+export const OFFICIAL_UPI_ID = 'prakrish31-4@okaxis';
+export const OFFICIAL_PAYEE_NAME = 'Pratima K';
+export const OFFICIAL_GPAY_PHONE = '7020378984';
+export const OFFICIAL_BANK_NAME = 'Axis Bank';
+
+

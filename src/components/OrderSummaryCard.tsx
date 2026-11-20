@@ -1,5 +1,6 @@
 import React from 'react';
 import { Phone, MessageCircle, ShieldCheck, Truck, Plus, Minus, ArrowRight, QrCode, Share2 } from 'lucide-react';
+import { OFFICIAL_UPI_ID, OFFICIAL_GPAY_PHONE } from '../types';
 
 interface OrderSummaryCardProps {
   quantity: number;
@@ -166,7 +167,7 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
           className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-amber-50 hover:bg-amber-100/80 text-amber-950 border border-amber-200/80 font-medium rounded-xl transition-colors cursor-pointer text-xs sm:text-sm"
         >
           <QrCode className="w-4 h-4 text-amber-700" />
-          <span>Pay Directly with QR / GPay (UPI ID: prakrish31-5@oksbi)</span>
+          <span>Pay Directly with QR / GPay (UPI ID: {OFFICIAL_UPI_ID})</span>
         </button>
       </div>
 
@@ -175,10 +176,10 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
         <div className="font-semibold text-slate-800">Store Terms and Conditions</div>
         <ul className="space-y-1 list-disc list-inside text-slate-600">
           <li>
-            Pay directly via GPay: <span className="font-mono font-bold text-slate-800">7020378984</span>
+            Pay directly via GPay: <span className="font-mono font-bold text-slate-800">{OFFICIAL_GPAY_PHONE}</span>
           </li>
           <li>
-            and above scanner / UPI ID: <span className="font-mono font-bold text-slate-800">prakrish31-5@oksbi</span>
+            and above scanner / UPI ID: <span className="font-mono font-bold text-slate-800">{OFFICIAL_UPI_ID}</span>
           </li>
           <li>Order dispatched within 1-2 business days with India Post tracking.</li>
         </ul>
